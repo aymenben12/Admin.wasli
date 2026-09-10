@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>وصلي - إدارة</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="إدارة وصلي">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<style>
+* { box-sizing: border-box; }
+
+:root {
+  --primary: #1a1a2e;
+  --accent: #ff5538;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #17181c;
+  --muted: #7b7e86;
+  --border: #e7e8ec;
+  --green: #16a56a;
+  --red: #e53935;
+  --shadow: 0 8px 30px rgba(0,0,0,.07);
+}
+
+html, body {
+  margin: 0; padding: 0; min-height: 100%;
+  background: var(--bg); color: var(--text);
+  font-family: Arial, "Noto Sans Arabic", sans-serif;
+  direction: rtl;
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+.login-screen {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+.brand-logo {
+  width: 90px; height: 90px; border-radius: 24px;
+  background: var(--primary); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 42px; font-weight: 900; margin-bottom: 15px;
+}
+
+.login-card {
+  max-width: 420px; width: 100%;
+  background: var(--card); padding: 22px; border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+.field input, .field select {
+  width: 100%; border: 1px solid var(--border); background: #fafafa;
+  border-radius: 12px; padding: 12px; outline: none;
+}
+
+.primary-btn {
+  border: 0; border-radius: 13px; padding: 13px 18px;
+  background: var(--accent); color: #fff; font-weight: 800; width: 100%;
+}
+
+.app-screen { min-height: 100vh; }
+
+.dashboard-header {
+  background: var(--primary); color: #fff;
+  padding: 16px; display: flex; justify-content: space-between; align-items: center;
+}
+.dashboard-header small { opacity: .7; }
+.dashboard-header h2 { margin: 4px 0 0; }
+
+.logout-btn {
+  border: 0; border-radius: 11px; padding: 10px;
+  background: rgba(255,255,255,.15); color: #fff; font-weight: 700;
+}
+
+.dashboard-tabs { background: #fff; display: flex; border-bottom: 1px solid var(--border); }
+.dash-tab {
+  flex: 1; border: 0; background: transparent; padding: 14px;
+  color: var(--muted); border-bottom: 3px solid transparent;
+}
+.dash-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.filters-box { padding: 12px 15px 0; background: #fff; }
+
+.dashboard-content { max-width: 900px; margin: auto; padding: 15px; }
+
+.section-title { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 10px; }
+
+.entity-card {
+  background: #fff; border-radius: 16px; padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.entity-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.status-badge {
+  display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 800;
+}
+.status-badge.settled { background: #e3f7ed; color: var(--green); }
+.status-badge.owing { background: #ffebeb; color: var(--red); }
+
+.info-box { background: #f7f7f8; border-radius: 10px; padding: 10px; font-size: 13px; margin-bottom: 10px; }
+
+.action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.action-btn { flex: 1; min-width: 100px; border: 0; border-radius: 10px; padding: 10px; font-weight: 700; }
+.action-green { background: #e2f7ed; color: var(--green); }
+.action-red { background: #ffebeb; color: var(--red); }
+.action-btn:disabled { opacity: .5; }
+
+.call-btn {
+  text-decoration: none; display: inline-block; margin-inline-start: 6px;
+  background: #edf3ff; color: #2864c7; border-radius: 8px; padding: 4px 8px; font-size: 12px;
+}
+
+.empty { text-align: center; padding: 30px 10px; color: var(--muted); }
+
+.toast {
+  position: fixed; left: 15px; right: 15px; bottom: 20px;
+  background: #202124; color: #fff; padding: 13px 15px; border-radius: 13px;
+  text-align: center; z-index: 200; opacity: 0; transform: translateY(15px);
+  pointer-events: none; transition: .25s;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <section id="loginScreen" class="login-screen">
+    <div class="brand-logo">A</div>
+    <h2 style="margin:0 0 20px;">إدارة وصلي</h2>
+
+    <div class="login-card">
+      <div class="field">
+        <label>كلمة مرور الإدارة</label>
+        <input id="adminPasswordInput" type="password">
+      </div>
+      <button type="button" id="adminPasswordSubmit" class="primary-btn">دخول</button>
+    </div>
+  </section>
+
+  <section id="adminApp" class="app-screen" hidden>
+
+    <header class="dashboard-header">
+      <div>
+        <small>لوحة الإدارة</small>
+        <h2>وصلي</h2>
+      </div>
+      <button type="button" id="adminLogoutBtn" class="logout-btn">🚪 خروج</button>
+    </header>
+
+    <div class="dashboard-tabs">
+      <button type="button" class="dash-tab active" data-admin-tab="sellers">🏪 المطاعم</button>
+      <button type="button" class="dash-tab" data-admin-tab="drivers">🚴 الديليفري</button>
+    </div>
+
+    <div class="filters-box">
+      <div class="field">
+        <input id="adminSearchInput" type="text" placeholder="ابحث بالاسم أو رقم الهاتف...">
+      </div>
+      <div class="field">
+        <select id="adminWilayaFilter"></select>
+      </div>
+    </div>
+
+    <main id="adminContent" class="dashboard-content"></main>
+
+  </section>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script>
+"use strict";
+
+/* ⚠️ نفس بيانات مشروع Firebase المستخدمة في تطبيق وصلي الرئيسي —
+   حتى تتصل لوحة الإدارة بنفس قاعدة البيانات بالضبط. */
+const firebaseConfig = {
+  apiKey: "AIzaSyCj7Ci2j4aiWamaw-sHU0E0arKPxO1ZZeg",
+  authDomain: "wasli-72a2c.firebaseapp.com",
+  projectId: "wasli-72a2c",
+  storageBucket: "wasli-72a2c.firebasestorage.app",
+  messagingSenderId: "795666823382",
+  appId: "1:795666823382:web:9674ccd32f3efdb274f177"
+};
+
+const ADMIN_AUTH_EMAIL = "admin@wasli.app";
+
+const $ = function(sel) { return document.querySelector(sel); };
+const $$ = function(sel) { return Array.from(document.querySelectorAll(sel)); };
+
+let fsdb = null;
+let firebaseReady = false;
+let toastTimer = null;
+let adminTab = "sellers";
+let adminSearchQuery = "";
+let adminWilayaFilter = "";
+
+let db = { users: [], restaurants: [], orders: [] };
+
+const WILAYAS = [
+  ["01","أدرار"],["02","الشلف"],["03","الأغواط"],["04","أم البواقي"],["05","باتنة"],
+  ["06","بجاية"],["07","بسكرة"],["08","بشار"],["09","البليدة"],["10","البويرة"],
+  ["11","تمنراست"],["12","تبسة"],["13","تلمسان"],["14","تيارت"],["15","تيزي وزو"],
+  ["16","الجزائر"],["17","الجلفة"],["18","جيجل"],["19","سطيف"],["20","سعيدة"],
+  ["21","سكيكدة"],["22","سيدي بلعباس"],["23","عنابة"],["24","قالمة"],["25","قسنطينة"],
+  ["26","المدية"],["27","مستغانم"],["28","المسيلة"],["29","معسكر"],["30","ورقلة"],
+  ["31","وهران"],["32","البيض"],["33","إليزي"],["34","برج بوعريريج"],["35","بومرداس"],
+  ["36","الطارف"],["37","تندوف"],["38","تيسمسيلت"],["39","الوادي"],["40","خنشلة"],
+  ["41","سوق أهراس"],["42","تيبازة"],["43","ميلة"],["44","عين الدفلى"],["45","النعامة"],
+  ["46","عين تموشنت"],["47","غرداية"],["48","غليزان"],["49","تيميمون"],["50","برج باجي مختار"],
+  ["51","أولاد جلال"],["52","بني عباس"],["53","عين صالح"],["54","عين قزام"],["55","تقرت"],
+  ["56","جانت"],["57","المغير"],["58","المنيعة"]
+];
+
+function esc(v) {
+  return String(v == null ? "" : v)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function money(v) { return Number(v || 0).toFixed(2) + " DA"; }
+
+function getWilaya(code) {
+  const item = WILAYAS.find(function(w) { return w[0] === code; });
+  return item ? item[1] : (code || "");
+}
+
+function callButton(phone) {
+  if (!phone) return "";
+  return '<a href="tel:' + esc(phone) + '" class="call-btn">📞 ' + esc(phone) + '</a>';
+}
+
+function toast(message) {
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove("show"); }, 2500);
+}
+
+function fillWilayaFilterSelect() {
+  const select = $("#adminWilayaFilter");
+  let html = '<option value="">كل الولايات</option>';
+  WILAYAS.forEach(function(w) {
+    html += '<option value="' + w[0] + '"' + (w[0] === adminWilayaFilter ? " selected" : "") + '>' + esc(w[0] + " - " + w[1]) + '</option>';
+  });
+  select.innerHTML = html;
+  select.value = adminWilayaFilter;
+}
+
+function mapSnapshot(snapshot) {
+  return snapshot.docs.map(function(d) { return Object.assign({ id: d.id }, d.data()); });
+}
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    fsdb = firebase.firestore();
+    firebaseReady = true;
+  } catch (e) {
+    toast("لم يتم ضبط Firebase بشكل صحيح.");
+  }
+}
+
+function startDataListeners() {
+  if (!firebaseReady) return;
+
+  fsdb.collection("restaurants").onSnapshot(function(snap) {
+    db.restaurants = mapSnapshot(snap);
+    renderAdminPanel();
+  }, function(err) {
+    if (err.code !== "permission-denied") toast("خطأ (restaurants): " + err.message);
+  });
+
+  fsdb.collection("users").onSnapshot(function(snap) {
+    db.users = mapSnapshot(snap);
+    renderAdminPanel();
+  }, function(err) {
+    if (err.code !== "permission-denied") toast("خطأ (users): " + err.message);
+  });
+
+  fsdb.collection("orders").onSnapshot(function(snap) {
+    db.orders = mapSnapshot(snap);
+    renderAdminPanel();
+  }, function(err) {
+    if (err.code !== "permission-denied") toast("خطأ (orders): " + err.message);
+  });
+}
+
+/* ================= LOGIN ================= */
+
+function attemptAdminLogin() {
+  attemptAdminLoginInner().catch(function(error) {
+    toast("خطأ: " + (error && error.message ? error.message : error));
+  });
+}
+
+async function attemptAdminLoginInner() {
+  const password = $("#adminPasswordInput").value;
+
+  if (!password || password.length < 6) {
+    toast("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
+    return;
+  }
+
+  let authUser = null;
+
+  try {
+    const credential = await firebase.auth().createUserWithEmailAndPassword(ADMIN_AUTH_EMAIL, password);
+    authUser = credential.user;
+    window.prompt("تم إنشاء حساب الإدارة! انسخ هذا المعرّف (UID) وضعه في قواعد الأمان:", authUser.uid);
+  } catch (error) {
+    if (error.code === "auth/email-already-in-use") {
+      try {
+        const credential = await firebase.auth().signInWithEmailAndPassword(ADMIN_AUTH_EMAIL, password);
+        authUser = credential.user;
+      } catch (signInError) {
+        toast("كلمة مرور الإدارة غير صحيحة.");
+        return;
+      }
+    } else {
+      throw error;
+    }
+  }
+
+  $("#loginScreen").hidden = true;
+  $("#adminApp").hidden = false;
+
+  fillWilayaFilterSelect();
+  startDataListeners();
+  renderAdminPanel();
+}
+
+function adminLogout() {
+  if (firebaseReady) firebase.auth().signOut().catch(function() {});
+  $("#adminApp").hidden = true;
+  $("#loginScreen").hidden = false;
+  $("#adminPasswordInput").value = "";
+  toast("تم الخروج.");
+}
+
+/* ================= RENDER ================= */
+
+function renderAdminPanel() {
+  $$(".dash-tab").forEach(function(btn) {
+    btn.classList.toggle("active", btn.getAttribute("data-admin-tab") === adminTab);
+  });
+
+  if (adminTab === "drivers") renderAdminDrivers();
+  else renderAdminSellers();
+}
+
+function matchesAdminFilters(name, phone, wilaya) {
+  if (adminWilayaFilter && wilaya !== adminWilayaFilter) return false;
+  if (adminSearchQuery) {
+    const q = adminSearchQuery.toLowerCase();
+    const nameMatch = (name || "").toLowerCase().indexOf(q) !== -1;
+    const phoneMatch = (phone || "").indexOf(adminSearchQuery) !== -1;
+    if (!nameMatch && !phoneMatch) return false;
+  }
+  return true;
+}
+
+function buildAdminEntities(role) {
+  const entities = [];
+
+  if (role === "seller") {
+    db.users.filter(function(u) { return u.role === "seller"; }).forEach(function(seller) {
+      const restaurant = db.restaurants.find(function(r) { return r.ownerId === seller.id; });
+      const lastSettled = seller.lastSettledAt || 0;
+      const doneOrders = db.orders.filter(function(o) {
+        return restaurant && o.restaurantId === restaurant.id && o.status === "done" && (o.createdAtMs || 0) > lastSettled;
+      });
+      let commission = 0;
+      doneOrders.forEach(function(o) { commission += Number(o.platformFeeRestaurant || 0); });
+
+      entities.push({
+        id: seller.id, title: restaurant ? restaurant.name : seller.name, name: seller.name,
+        phone: seller.phone, wilaya: seller.wilaya, ordersCount: doneOrders.length,
+        commission: commission, suspended: !!seller.suspended
+      });
+    });
+  } else {
+    db.users.filter(function(u) { return u.role === "driver"; }).forEach(function(driver) {
+      const lastSettled = driver.lastSettledAt || 0;
+      const doneOrders = db.orders.filter(function(o) {
+        return o.driverId === driver.id && o.status === "done" && (o.createdAtMs || 0) > lastSettled;
+      });
+      let commission = 0;
+      doneOrders.forEach(function(o) { commission += Number(o.platformFeeDriver || 0); });
+
+      entities.push({
+        id: driver.id, title: driver.name, name: driver.name,
+        phone: driver.phone, wilaya: driver.wilaya, ordersCount: doneOrders.length,
+        commission: commission, suspended: !!driver.suspended
+      });
+    });
+  }
+
+  return entities.filter(function(e) { return matchesAdminFilters(e.name, e.phone, e.wilaya); });
+}
+
+function renderEntityCard(data) {
+  const settled = data.commission <= 0;
+  return `
+    <div class="entity-card">
+      <div class="entity-head">
+        <div>
+          <strong>${esc(data.title)}</strong><br>
+          <small style="color:var(--muted);">👤 ${esc(data.name)}</small>
+        </div>
+        <span class="status-badge ${settled ? "settled" : "owing"}">
+          ${settled ? "✓ مسدّد" : "⚠ عليه مبلغ"}
+        </span>
+      </div>
+      <div class="info-box">
+        📞 <strong>الهاتف:</strong> ${esc(data.phone)} ${callButton(data.phone)}<br>
+        📍 <strong>الولاية:</strong> ${esc(getWilaya(data.wilaya))}<br>
+        📦 <strong>عدد الطلبات:</strong> ${data.ordersCount}<br>
+        💼 <strong>العمولة المستحقة:</strong> ${money(data.commission)}
+      </div>
+      <div class="action-row">
+        <button type="button" class="action-btn action-green" data-mark-paid="${esc(data.id)}" ${settled ? "disabled" : ""}>
+          ✓ تأكيد الدفع
+        </button>
+        <button type="button" class="action-btn ${data.suspended ? "action-green" : "action-red"}" data-toggle-suspend="${esc(data.id)}">
+          ${data.suspended ? "▶ تفعيل" : "⏸ إيقاف"}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderGroup(all, label) {
+  const unpaid = all.filter(function(e) { return e.commission > 0; });
+  const paid = all.filter(function(e) { return e.commission <= 0; });
+
+  let html = `<div class="section-title"><h3>🔴 ${label} عليهم عمولة</h3><small>${unpaid.length}</small></div>`;
+  html += unpaid.length ? unpaid.map(renderEntityCard).join("") : `<div class="empty">لا يوجد أحد عليه عمولة حالياً.</div>`;
+
+  html += `<div class="section-title"><h3>🟢 ${label} مؤكدون الدفع</h3><small>${paid.length}</small></div>`;
+  html += paid.length ? paid.map(renderEntityCard).join("") : `<div class="empty">لا يوجد أحد مؤكد الدفع بعد.</div>`;
+
+  return html;
+}
+
+function renderAdminSellers() {
+  $("#adminContent").innerHTML = renderGroup(buildAdminEntities("seller"), "مطاعم");
+}
+
+function renderAdminDrivers() {
+  $("#adminContent").innerHTML = renderGroup(buildAdminEntities("driver"), "ديليفري");
+}
+
+/* ================= ACTIONS ================= */
+
+function markPaid(userId) {
+  fsdb.collection("users").doc(userId).update({ lastSettledAt: Date.now() })
+    .then(function() { toast("تم تسجيل الدفع."); })
+    .catch(function(e) { toast("خطأ: " + e.message); });
+}
+
+function toggleSuspend(userId, currentlySuspended) {
+  fsdb.collection("users").doc(userId).update({ suspended: !currentlySuspended })
+    .then(function() { toast(currentlySuspended ? "تم التفعيل." : "تم الإيقاف."); })
+    .catch(function(e) { toast("خطأ: " + e.message); });
+}
+
+/* ================= EVENTS ================= */
+
+document.addEventListener("click", function(event) {
+
+  if (event.target.id === "adminPasswordSubmit") {
+    attemptAdminLogin();
+    return;
+  }
+
+  if (event.target.id === "adminLogoutBtn") {
+    adminLogout();
+    return;
+  }
+
+  const tabBtn = event.target.closest("[data-admin-tab]");
+  if (tabBtn) {
+    adminTab = tabBtn.getAttribute("data-admin-tab");
+    renderAdminPanel();
+    return;
+  }
+
+  const markPaidBtn = event.target.closest("[data-mark-paid]");
+  if (markPaidBtn && !markPaidBtn.disabled) {
+    markPaid(markPaidBtn.getAttribute("data-mark-paid"));
+    return;
+  }
+
+  const toggleBtn = event.target.closest("[data-toggle-suspend]");
+  if (toggleBtn) {
+    const isSuspended = toggleBtn.textContent.indexOf("تفعيل") !== -1;
+    toggleSuspend(toggleBtn.getAttribute("data-toggle-suspend"), isSuspended);
+    return;
+  }
+
+});
+
+document.addEventListener("input", function(event) {
+  if (event.target.id === "adminSearchInput") {
+    adminSearchQuery = event.target.value.trim();
+    renderAdminPanel();
+  }
+});
+
+document.addEventListener("change", function(event) {
+  if (event.target.id === "adminWilayaFilter") {
+    adminWilayaFilter = event.target.value;
+    renderAdminPanel();
+  }
+});
+
+/* ================= INIT ================= */
+
+initFirebase();
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("service-worker.js").catch(function() {});
+    });
+  }
+</script>
+
+</body>
+</html>
